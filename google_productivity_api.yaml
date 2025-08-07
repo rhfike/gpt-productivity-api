@@ -1,13 +1,29 @@
-
 openapi: 3.0.0
 info:
   title: Google Productivity API
-  version: 1.1.0
+  version: 1.2.0
+servers:
+  - url: https://www.googleapis.com
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - bearerAuth: []
 paths:
-  /calendar/events:
+  /calendar/v3/calendars/{calendarId}/events:
     post:
-      summary: Create a new calendar event
+      summary: Create a calendar event
       operationId: createEvent
+      parameters:
+        - name: calendarId
+          in: path
+          required: true
+          schema:
+            type: string
+            default: primary
       requestBody:
         required: true
         content:
@@ -15,25 +31,28 @@ paths:
             schema:
               type: object
               properties:
-                summary:
-                  type: string
-                description:
-                  type: string
+                summary: { type: string }
+                description: { type: string }
                 start:
-                  type: string
-                  format: date-time
+                  type: object
+                  properties:
+                    dateTime: { type: string, format: date-time }
+                    timeZone: { type: string }
                 end:
-                  type: string
-                  format: date-time
+                  type: object
+                  properties:
+                    dateTime: { type: string, format: date-time }
+                    timeZone: { type: string }
                 attendees:
                   type: array
                   items:
-                    type: string
+                    type: object
+                    properties:
+                      email: { type: string }
                 reminders:
                   type: object
                   properties:
-                    useDefault:
-                      type: boolean
+                    useDefault: { type: boolean }
                     overrides:
                       type: array
                       items:
@@ -42,19 +61,50 @@ paths:
                           method:
                             type: string
                             enum: [popup, email]
-                          minutes:
-                            type: integer
-              required:
-                - summary
-                - start
-                - end
+                          minutes: { type: integer }
+              required: [summary, start, end]
       responses:
         '200':
-          description: Event created successfully.
+          description: Event created.
+    get:
+      summary: List events in a time window
+      operationId: listEvents
+      parameters:
+        - name: calendarId
+          in: path
+          required: true
+          schema:
+            type: string
+            default: primary
+        - name: timeMin
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: timeMax
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: singleEvents
+          in: query
+          schema:
+            type: boolean
+            default: true
+        - name: orderBy
+          in: query
+          schema:
+            type: string
+            default: startTime
+      responses:
+        '200':
+          description: Events returned.
 
-  /calendar/freebusy:
+  /calendar/v3/freeBusy:
     post:
-      summary: Check availability for scheduling
+      summary: Check availability (free/busy)
       operationId: checkAvailability
       requestBody:
         required: true
@@ -63,23 +113,33 @@ paths:
             schema:
               type: object
               properties:
-                start:
-                  type: string
-                  format: date-time
-                end:
-                  type: string
-                  format: date-time
-              required:
-                - start
-                - end
+                timeMin: { type: string, format: date-time }
+                timeMax: { type: string, format: date-time }
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        description: Calendar ID (use 'primary' for default)
+                        default: primary
+              required: [timeMin, timeMax, items]
       responses:
         '200':
-          description: Availability window returned.
+          description: Free/busy information returned.
 
-  /tasks:
+  /tasks/v1/lists/{tasklist}/tasks:
     post:
-      summary: Create a new Google Task
+      summary: Create a Google Task
       operationId: createTask
+      parameters:
+        - name: tasklist
+          in: path
+          required: true
+          schema:
+            type: string
+            default: '@default'
       requestBody:
         required: true
         content:
@@ -87,30 +147,40 @@ paths:
             schema:
               type: object
               properties:
-                title:
-                  type: string
-                notes:
-                  type: string
+                title: { type: string }
+                notes: { type: string }
                 due:
                   type: string
                   format: date-time
-              required:
-                - title
+              required: [title]
       responses:
         '200':
           description: Task created.
-
-  /summary/daily:
     get:
-      summary: Get a daily overview of tasks and calendar events
-      operationId: getDailySummary
+      summary: List Google Tasks
+      operationId: listTasks
       parameters:
-        - name: date
-          in: query
-          required: false
+        - name: tasklist
+          in: path
+          required: true
           schema:
             type: string
-            format: date
+            default: '@default'
+        - name: dueMin
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: dueMax
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: showCompleted
+          in: query
+          schema:
+            type: boolean
+            default: false
       responses:
         '200':
-          description: Daily summary returned
+          description: Tasks returned.

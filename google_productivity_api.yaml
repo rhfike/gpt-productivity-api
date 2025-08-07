@@ -1,0 +1,116 @@
+
+openapi: 3.0.0
+info:
+  title: Google Productivity API
+  version: 1.1.0
+paths:
+  /calendar/events:
+    post:
+      summary: Create a new calendar event
+      operationId: createEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                summary:
+                  type: string
+                description:
+                  type: string
+                start:
+                  type: string
+                  format: date-time
+                end:
+                  type: string
+                  format: date-time
+                attendees:
+                  type: array
+                  items:
+                    type: string
+                reminders:
+                  type: object
+                  properties:
+                    useDefault:
+                      type: boolean
+                    overrides:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          method:
+                            type: string
+                            enum: [popup, email]
+                          minutes:
+                            type: integer
+              required:
+                - summary
+                - start
+                - end
+      responses:
+        '200':
+          description: Event created successfully.
+
+  /calendar/freebusy:
+    post:
+      summary: Check availability for scheduling
+      operationId: checkAvailability
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                start:
+                  type: string
+                  format: date-time
+                end:
+                  type: string
+                  format: date-time
+              required:
+                - start
+                - end
+      responses:
+        '200':
+          description: Availability window returned.
+
+  /tasks:
+    post:
+      summary: Create a new Google Task
+      operationId: createTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                notes:
+                  type: string
+                due:
+                  type: string
+                  format: date-time
+              required:
+                - title
+      responses:
+        '200':
+          description: Task created.
+
+  /summary/daily:
+    get:
+      summary: Get a daily overview of tasks and calendar events
+      operationId: getDailySummary
+      parameters:
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Daily summary returned
